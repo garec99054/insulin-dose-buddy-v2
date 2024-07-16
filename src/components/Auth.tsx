@@ -10,7 +10,12 @@ export default function Auth() {
   const handleLogin = async (email: string) => {
     try {
       setLoading(true)
-      const { error } = await supabase.auth.signInWithOtp({ email })
+      const { error } = await supabase.auth.signInWithOtp({ 
+        email,
+        options: {
+          emailRedirectTo: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+        }
+      })
       if (error) throw error
       alert('Check your email for the login link!')
     } catch (error: any) {
