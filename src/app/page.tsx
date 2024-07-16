@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
 import Calculator from '../components/Calculator'
 import DarkMode from '../components/DarkMode'
 import Disclaimer from '../components/Disclaimer'
@@ -12,20 +11,26 @@ import Auth from '../components/Auth'
 
 export default function Home() {
   const [session, setSession] = useState<any>(null)
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-    })
+    setIsClient(true)
+    const initializeSupabase = async () => {
+      const { supabase } = await import('../lib/supabase')
+      const { data } = await supabase.auth.getSession()
+      setSession(data.session)
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
+      supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session)
+      })
+    }
 
-    return () => subscription.unsubscribe()
+    initializeSupabase()
   }, [])
+
+  if (!isClient) {
+    return null // or a loading indicator
+  }
 
   return (
     <main>
