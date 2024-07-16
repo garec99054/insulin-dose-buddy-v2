@@ -8,19 +8,34 @@ export default function Auth() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
+  const [lastAttempt, setLastAttempt] = useState(0)
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (Date.now() - lastAttempt < 30000) {
+      alert("Please wait 30 seconds before trying again.")
+      return
+    }
+    
+    setLastAttempt(Date.now())
     setLoading(true)
     try {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({ email, password })
-        if (error) throw error
-        alert('Signed up successfully!')
+        if (error) {
+          if (error.message.includes('rate limit')) {
+            throw new Error("Too many sign-up attempts. Please try again later.")
+          }
+          throw error
+        }
+        alert('Signed up successfully! You can now log in.')
+        setIsSignUp(false)
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
-        // Successful login - you can redirect or update UI here
+        alert('Logged in successfully!')
+        // Redirect or update UI here after successful login
       }
     } catch (error: any) {
       alert(error.message)
