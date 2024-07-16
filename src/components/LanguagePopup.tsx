@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useTranslation } from '../context/TranslationContext'
+import { useTranslation, Language } from '../context/TranslationContext'
 
 export default function LanguagePopup() {
   const [show, setShow] = useState(false)
@@ -14,7 +14,7 @@ export default function LanguagePopup() {
     }
   }, [])
 
-  const selectLanguage = (lang: string) => {
+  const selectLanguage = (lang: Language) => {
     changeLanguage(lang)
     localStorage.setItem('language', lang)
     setShow(false)
