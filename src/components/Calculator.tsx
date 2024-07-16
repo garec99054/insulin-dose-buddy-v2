@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from '../context/TranslationContext'
@@ -22,7 +20,7 @@ export default function Calculator() {
         setFormData(prev => ({ ...prev, [key]: savedValue }))
       }
     })
-  }, [])
+  }, [formData])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -53,11 +51,17 @@ export default function Calculator() {
 
     setResult(result)
 
+    const { data: user, error: userError } = await supabase.auth.getUser()
+    if (userError) {
+      console.error('Error getting user:', userError)
+      return
+    }
+
     const { data, error } = await supabase
       .from('calculations')
       .insert([
         { 
-          user_id: supabase.auth.user()?.id,
+          user_id: user.user?.id,
           ...values,
           ...result
         }
@@ -71,13 +75,89 @@ export default function Calculator() {
       <h1 id="title">{t("The Dose Buddy 💉 v2")}</h1>
       <h2 id="subtitle">{t("An insulin dosage calculator")}</h2>
       <form id="insulinCalculator" onSubmit={calculateDose}>
-        {/* Form inputs */}
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="carbsEaten" id="label-carbsEaten">{t("Carbs eaten (g)")}</label>
+            <input 
+              type="number" 
+              id="carbsEaten" 
+              name="carbsEaten"
+              value={formData.carbsEaten}
+              onChange={handleInputChange}
+              min="0" 
+              step="1" 
+              placeholder={t("Enter grams")}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="insulinCarbRatio" id="label-insulinCarbRatio">{t("Insulin to carb ratio")}</label>
+            <input 
+              type="number" 
+              id="insulinCarbRatio" 
+              name="insulinCarbRatio"
+              value={formData.insulinCarbRatio}
+              onChange={handleInputChange}
+              min="1" 
+              step="1" 
+              placeholder={t("1 unit : __ g")}
+            />
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="currentBloodSugar" id="label-currentBloodSugar">{t("Current BG (mg/dL)")}</label>
+            <input 
+              type="number" 
+              id="currentBloodSugar" 
+              name="currentBloodSugar"
+              value={formData.currentBloodSugar}
+              onChange={handleInputChange}
+              min="0" 
+              step="1" 
+              placeholder={t("Enter mg/dL")}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="targetBloodSugar" id="label-targetBloodSugar">{t("Target BG (mg/dL)")}</label>
+            <input 
+              type="number" 
+              id="targetBloodSugar" 
+              name="targetBloodSugar"
+              value={formData.targetBloodSugar}
+              onChange={handleInputChange}
+              min="0" 
+              step="1" 
+              placeholder={t("Enter mg/dL")}
+            />
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="correctionFactor" id="label-correctionFactor">{t("Correction factor")}</label>
+            <input 
+              type="number" 
+              id="correctionFactor" 
+              name="correctionFactor"
+              value={formData.correctionFactor}
+              onChange={handleInputChange}
+              min="1" 
+              step="1" 
+              placeholder={t("1 unit : __ mg/dL")}
+            />
+          </div>
+        </div>
         <button type="submit" id="calculate-button">{t("Calculate Dose")}</button>
       </form>
 
       {result && (
         <div id="result" className="show">
-          {/* Result display */}
+          <p>{t("Recommended insulin dose:")}</p>
+          <span className="highlight glitter" style={{color: result.recommendedDose <= 5 ? 'green' : result.recommendedDose <= 10 ? 'orange' : 'red'}}>
+            {result.recommendedDose} {t("units")}
+          </span>
+          <p className="actual-value">{t("Actual calculated value:")} {result.actualValue} {t("units")}</p>
+          <p>{t("Carb dose:")} {result.carbDose} {t("units")}</p>
+          <p>{t("Correction dose:")} {result.correctionDose} {t("units")}</p>
         </div>
       )}
     </div>
